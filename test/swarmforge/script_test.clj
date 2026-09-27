@@ -358,6 +358,37 @@
       (finally
         (fs/delete-tree root)))))
 
+(deftest swarmforge-parses-cursor-backend-for-coder
+  (let [root (tmp-dir)]
+    (try
+      (write-file (fs/path root "swarmforge/constitution.prompt") "Read articles.\n")
+      (write-file (fs/path root "swarmforge/swarmforge.conf")
+                  "window-invisible coder cursor master task forward-only --model composer-2.5\n")
+      (write-file (fs/path root "swarmforge/roles/coder.prompt") "coder\n")
+      (let [result (run {:dir root :ok? false}
+                        (script "swarmforge.bb") "--test-parse" (str root))]
+        (is (zero? (:exit result)) (:err result))
+        (when (zero? (:exit result))
+          (is (str/includes? (slurp (str (fs/path root ".swarmforge/roles.tsv")))
+                             "\tCoder\tcursor\ttask\tforward-only"))))
+      (finally
+        (fs/delete-tree root)))))
+
+(deftest cursor-launch-command-uses-agent-workspace-and-model
+  (let [root (tmp-dir)]
+    (try
+      (let [result (run {:dir root :ok? false}
+                        (script "swarmforge.bb") "--test-launch-command"
+                        (str root) "cursor" "--model composer-2.5")
+            command (:out result)]
+        (is (zero? (:exit result)) (:err result))
+        (when (zero? (:exit result))
+          (is (str/includes? command (str "agent --workspace '" root "' ")))
+          (is (str/includes? command "--trust --force --model composer-2.5"))
+          (is (str/includes? command ".swarmforge/prompts/coder.md"))))
+      (finally
+        (fs/delete-tree root)))))
+
 (deftest grok-launch-command-passes-initial-prompt
   (let [root (tmp-dir)]
     (try
@@ -1108,7 +1139,7 @@
       (let [result (run {:dir host
                          :env {"SWARMFORGE_BASE_DIR" (str base)
                                "SWARMFORGE_PACKS_DIR" (str packs)}}
-                        (str (fs/path repo-root "get-swarm-forge")))]
+                        (str (fs/path repo-root "get-swarm-forge")) "project-manager")]
         (is (zero? (:exit result)) (:err result))
         (is (= "host-readme\n" (slurp (str (fs/path host "README.md")))))
         (is (= "{:paths [\"test\"]}\n" (slurp (str (fs/path host "bb.edn")))))
@@ -1130,4 +1161,3 @@
         (fs/delete-tree host)
         (fs/delete-tree base)
         (fs/delete-tree packs)))))
-

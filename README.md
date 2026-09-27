@@ -41,8 +41,8 @@ experimental workflows. They are not `get-swarm-forge` products.
 - `git`
 - `tmux`
 - Babashka (`bb`)
-- At least one configured agent backend: `grok`, `codex`, `claude`, or
-  `copilot`
+- At least one configured agent backend: `grok`, `codex`, `claude`,
+  `copilot`, or `cursor` (the Cursor CLI executable is `agent`)
 
 ## Install the helper
 
@@ -103,8 +103,10 @@ window[-invisible] <role> <backend> <worktree> [task|batch] [forward-only|back-o
   group of queued handoffs together.
 - Propagation defaults to `forward-only`. `back-one` and `back-all` arrange
   merge-only copies for earlier roles after downstream work.
-- Supported backends are `codex`, `grok`, `claude`, and `copilot`; remaining
+- Supported backends are `codex`, `grok`, `claude`, `copilot`, and `cursor`; remaining
   tokens are passed to that backend.
+- Cursor roles require an authenticated `agent` CLI. For example, configure
+  `window-invisible coder cursor coder task forward-only --model composer-2.5`.
 
 Forge hosts instead use `Lieutenant <backend> [backend arguments...]`.
 Branches may extend the grammar for their own control plane—for example,
